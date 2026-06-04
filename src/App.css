@@ -11,10 +11,12 @@ body {
   background-color: #ffffff;
   color: #222222;
 }
-
 .app-container {
   width: 100%;
-  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
 }
 
 /* --- HEADER OPTIMIZATION --- */
@@ -22,12 +24,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 60px;
+  padding: 15px 4%; /* Տոկոսային padding-ը ապահովում է ճկունություն բոլոր էկրանների համար */
   border-bottom: 1px solid #f2f2f2;
   background: #fff;
   position: sticky;
   top: 0;
   z-index: 1000;
+  width: 100%;
 }
 
 .logo img {
@@ -90,10 +93,10 @@ body {
 /* --- LAYOUT --- */
 .content-wrapper {
   display: flex;
-  padding: 30px 60px;
+  padding: 30px 4%; /* Կողային padding-ները համապատասխանեցված են Header-ին */
   gap: 40px;
+  width: 100%;
 }
-
 /* --- SIDEBAR --- */
 .sidebar {
   width: 280px;
@@ -182,7 +185,7 @@ body {
 
 .property-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* Եթե էկրանը շատ մեծ է, կարող ես դարձնել նաև repeat(4, 1fr) */
   gap: 24px;
 }
 
@@ -272,4 +275,168 @@ body {
   font-size: 16px;
   color: #111;
   margin-top: 2px;
+}
+/* --- FOOTER STYLES --- */
+.footer-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 50px;
+}
+
+/* Հայտարարության բլոկ */
+.announcement-section {
+  width: 100%;
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+              url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1440&q=80');
+  background-size: cover;
+  background-position: center;
+  padding: 60px 4%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Glassmorphism Էֆեկտ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%; /* Կլանidentity է ողջ հասանելի տարածքը */
+  max-width: 100%; /* Հանում ենք նաև այս սահմանափակումը */
+  text-align: center;
+  color: #fff;
+}
+
+.glass-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.glass-card .subtitle {
+  font-size: 14px;
+  color: #dddddd;
+  margin-bottom: 30px;
+}
+
+.announcement-form {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.announcement-form input {
+  flex: 1;
+  min-width: 220px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  outline: none;
+  color: #fff;
+  font-size: 14px;
+}
+
+.announcement-form input::placeholder {
+  color: #cccccc;
+}
+
+.announcement-form input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.submit-btn {
+  padding: 14px 35px;
+  background: #f48020; /* Օրանժ գույնը */
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+.submit-btn:hover {
+  background: #e07016;
+}
+
+/* Կոնտակտների մուգ բլոկ */
+.contacts-section {
+  background-color: #0b0f19;
+  color: #ffffff;
+  padding: 50px 4% 80px 4%;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  width: 100%;
+}
+
+.contacts-section h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+}
+
+.contacts-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto 40px auto;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #cccccc;
+}
+
+.contact-item svg {
+  color: #ffffff;
+}
+
+.footer-links {
+  margin-bottom: 25px;
+}
+
+.footer-links a {
+  color: #aaaaaa;
+  text-decoration: none;
+  font-size: 13px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 2px;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: #ffffff;
+}
+
+.copyright {
+  font-size: 12px;
+  color: #666666;
+  letter-spacing: 0.5px;
+}
+
+/* Սարերի վեկտորային դիրքավորումը */
+.mountain-vector {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  line-height: 0;
 }
