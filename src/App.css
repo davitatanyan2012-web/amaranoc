@@ -11,6 +11,170 @@ body {
   background-color: #ffffff;
   color: #222222;
 }
+
+/* --- DISCOUNTS PAGE --- */
+.discounts-page-container {
+  padding: 30px 4%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.discount-banners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.discount-banner-card {
+  background: #0f172a;
+  color: #fff;
+  padding: 25px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  position: relative;
+}
+
+.badge-percent {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.discount-banner-card p {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+/* Gift Card Section */
+.gift-card-banner {
+  background: #d85a1b; /* Օրանժ հարուստ տոն */
+  border-radius: 24px;
+  padding: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.gift-left {
+  max-width: 60%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.gift-left h2 {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.gift-presets {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gift-presets button {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 18px;
+  border-radius: 30px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.order-gift-btn {
+  width: fit-content;
+  padding: 12px 35px;
+  background: white;
+  color: #d85a1b;
+  border: none;
+  font-weight: 700;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.mock-gift-card {
+  width: 280px;
+  height: 170px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* Hot Offers Range Slider */
+.hot-offers-section h2 {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.horizontal-filter {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slider-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.slider-wrapper input[type="range"] {
+  width: 100%;
+  accent-color: #d85a1b;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.current-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Header Favorite Badge */
+.favorite-header-btn {
+  position: relative;
+}
+
+.fav-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #f48020;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
 .app-container {
   width: 100%;
   min-height: 100vh;
