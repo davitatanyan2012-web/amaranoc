@@ -1,12 +1,19 @@
-import Header from "./components/header/header.jsx"
-import "./App.css"
-function App() {
+import React from 'react';
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import MainContent from './components/MainContent';
+import './App.css';
 
+function App() {
   return (
-    <>
-      <Header/>
-    </>
-  )
+    <div className="app-container">
+      <Header />
+      <div className="content-wrapper">
+        <Sidebar />
+        <MainContent />
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
