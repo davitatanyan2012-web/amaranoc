@@ -28,28 +28,33 @@ const Discounts = () => {
         </div>
       </div>
 
-      {/* Նվեր Քարտի Օրանժ Բաններ */}
-      <div className="gift-card-banner">
-        <div className="gift-left">
-          <h2>ՊԱՏՎԻՐԻՐ ՆՎԵՐ ՔԱՐՏ <br />ՔՈ ԿԱՄ ԸՆԿԵՐՆԵՐԻԴ ՀԱՄԱՐ</h2>
-          <p>Բաց մի թող ձեր թանկարժեք պահերը վայելելու հնարավորությունը։</p>
-          <div className="gift-presets">
-            <button>50,000 ֏</button>
-            <button>60,000 ֏</button>
-            <button>70,000 ֏</button>
-            <button>80,000 ֏</button>
-            <button>90,000 ֏</button>
-            <button>100,000 ֏</button>
-          </div>
-          <button className="order-gift-btn">Պատվիրել</button>
-        </div>
-        <div className="gift-right">
-          <div className="mock-gift-card">
-            <span>AMARANOC</span>
-            <small>BY HASCO AM</small>
-          </div>
-        </div>
+      
+       {/* ✨ ՊՐԵՄԻՈՒՄ ՈՃԻ ՆՎԵՐ ՔԱՐՏԻ ԲԱԺԻՆ */}
+<div className="premium-gift-banner">
+  <div className="banner-overlay">
+    <div className="gift-content-left">
+      <h2>ՊԱՏՎԻՐԻՐ ՆՎԵՐ ՔԱՐՏ <br /><span className="brand-orange-text">ՔՈ ԿԱՄ ԸՆԿԵՐՆԵՐԻԴ ՀԱՄԱՐ</span></h2>
+      <p>Բաց մի թող ձեր թանկարժեք պահերը վայելելու և անմոռանալի հիշողություններ պարգևելու հնարավորությունը։</p>
+      
+      <div className="gift-values-grid">
+        {['50,000 ֏', '60,000 ֏', '70,000 ֏', '80,000 ֏', '90,000 ֏', '100,000 ֏'].map((value, index) => (
+          <button key={index} className="value-chip-btn">{value}</button>
+        ))}
       </div>
+      
+      <button className="premium-order-btn">Պատվիրել</button>
+    </div>
+    
+    <div className="gift-content-right">
+      {/* Ռեալիստիկ պլաստիկ նվեր քարտի մոդելավորում */}
+      <div className="luxury-plastic-card">
+        <div className="card-chip"></div>
+        <div className="card-brand-name">AMARANOC</div>
+        <div className="card-holder">BY HASCO AM</div>
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* Թեժ Առաջարկներ */}
       <div className="hot-offers-section">
