@@ -711,3 +711,197 @@ body {
   width: 100%;
   line-height: 0;
 }
+/* 🌐 Էջի ընդհանուր էսթետիկան */
+.services-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #fafafa;
+}
+
+/* 🗂 Կատեգորիաների նուրբ մենյու */
+.services-tabs-menu {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 35px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+/* Կատեգորիայի կոճակները */
+.services-tab-item {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.services-tab-item:hover {
+  background-color: #f7fafc;
+  border-color: #cbd5e0;
+  color: #1a202c;
+}
+
+/* Ակտիվ կատեգորիա */
+.services-tab-item.is-active {
+  background-color: #ff7a00; /* Ամարանոցի օրիգինալ նարնջագույնը */
+  border-color: #ff7a00;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ⚡ Իդեալական 2 սյունականի ցանց */
+.services-twin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* 💳 Պրեմիում Հորիզոնական Քարտ */
+.service-premium-card {
+  display: flex;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  height: 180px; /* Կոկիկ ֆիքսված բարձրություն */
+  transition: all 0.3s ease;
+}
+
+.service-premium-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border-color: #e2e8f0;
+}
+
+/* 🖼 Նկարի բլոկ */
+.service-img-wrapper {
+  width: 35%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.service-premium-card:hover .service-img-wrapper img {
+  transform: scale(1.04); /* Նուրբ zoom էֆեկտ հովերի ժամանակ */
+}
+
+/* 📝 Տեքստային հատված */
+.service-info-wrapper {
+  width: 65%;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.service-text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.service-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  letter-spacing: -0.3px;
+}
+
+.service-card-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #718096;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Մաքսիմում 3 տող */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 💳 Ներքևի տող (Գին + Կոճակ) */
+.service-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.service-card-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+/* 🔘 Կոկիկ «Ավելացնել» Կոճակը */
+.service-card-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Հեռավորությունը իկոնայի և տեքստի միջև */
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+  padding: 6px 14px;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Իկոնայի նուրբ անիմացիա */
+.btn-icon-plus {
+  color: #718096;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Հովեր էֆեկտ կոճակի վրա */
+.service-card-add-btn:hover {
+  border-color: #ff7a00;
+  color: #ff7a00;
+  background-color: rgba(255, 122, 0, 0.02);
+}
+
+.service-card-add-btn:hover .btn-icon-plus {
+  color: #ff7a00;
+  transform: rotate(90deg); /* Պլյուսը նուրբ պտտվում է */
+}
+
+/* 📱 Ադապտիվություն */
+@media (max-width: 900px) {
+  .services-twin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .service-premium-card {
+    flex-direction: column;
+    height: auto;
+  }
+  .service-img-wrapper {
+    width: 100%;
+    height: 150px;
+  }
+  .service-info-wrapper {
+    width: 100%;
+    gap: 12px;
+  }
+}

@@ -18,7 +18,7 @@ const Header = () => {
         <ul>
           <li><Link to="/" className={location.pathname === '/' ? 'active' : ''}>Գլխավոր</Link></li>
           <li><Link to="/discounts" className={location.pathname === '/discounts' ? 'active' : ''}>Զեղչեր</Link></li>
-          <li><a href="#services">Ծառայություններ</a></li>
+          <li><Link to="/services" className={location.pathname === '/services' ? 'active' : ''}>Ծառայություններ</Link></li>
           <li><a href="#about">Մեր մասին</a></li>
         </ul>
       </nav>
