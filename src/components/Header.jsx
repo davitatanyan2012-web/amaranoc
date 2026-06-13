@@ -13,13 +13,13 @@ const Header = () => {
           <img src="https://amaranoc.am/images/logo.svg" alt="Amaranoc Logo" />
         </Link>
       </div>
-      
+
       <nav className="header-nav">
         <ul>
           <li><Link to="/" className={location.pathname === '/' ? 'active' : ''}>Գլխավոր</Link></li>
           <li><Link to="/discounts" className={location.pathname === '/discounts' ? 'active' : ''}>Զեղչեր</Link></li>
           <li><Link to="/services" className={location.pathname === '/services' ? 'active' : ''}>Ծառայություններ</Link></li>
-          <li><a href="#about">Մեր մասին</a></li>
+          <li><Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>ՄերՄասին</Link></li>
         </ul>
       </nav>
 

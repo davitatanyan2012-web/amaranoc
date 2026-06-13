@@ -8,7 +8,7 @@ import Favorites from './pages/Favorites';
 import Services from './pages/Services';
 import PremiumChat from './components/PremiumChat'; // 💬 Չատի ներմուծումը
 import './App.css'; // 🎨 Քո գլխավոր CSS-ը
-
+import About from './pages/About'
 function App() {
   return (
     <Router>
@@ -21,6 +21,7 @@ function App() {
           <Route path="/discounts" element={<Discounts />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/services" element={<Services/>}/>
+          <Route path="/about" element={<About />} />
         </Routes>
         
         {/* ⚡ Չատը տեղադրում ենք այստեղ՝ Routes-ից դուրս, բայց app-container-ի ներսում */}
