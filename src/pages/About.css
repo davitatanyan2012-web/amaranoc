@@ -1,214 +1,176 @@
+@reference "tailwindcss";
+
 .about-page-container {
-    width: 100%;
-    background-color: #ffffff;
-    color: #222222;
-    font-family: sans-serif;
-  }
-  
-  /* Hero Section */
-  .about-hero-section {
-    width: 100%;
-    height: 450px;
-    overflow: hidden;
-  }
-  
-  .about-hero-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  /* Content Wrapper */
-  .about-content-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 60px 20px;
-  }
-  
-  /* Alternating Row Layout */
-  .about-row-section {
-    display: flex;
-    align-items: center;
-    gap: 50px;
-    margin-bottom: 80px;
-  }
-  
-  .about-row-section.reverse {
-    flex-direction: row-reverse;
-  }
-  
-  .about-image-block {
-    flex: 1;
-    height: 380px;
-    overflow: hidden;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-  }
-  
-  .about-image-block img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-  }
-  
-  .about-image-block img:hover {
-    transform: scale(1.03);
-  }
-  
-  .about-text-block {
-    flex: 1;
-  }
-  
-  .about-section-title {
-    font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
-    position: relative;
-  }
-  
-  .about-text-block p {
-    font-size: 16px;
-    line-height: 1.7;
-    color: #555555;
-  }
-  
-  /* Middle Large Banner */
-  .about-middle-banner {
-    width: 100%;
-    height: 400px;
-    border-radius: 16px;
-    overflow: hidden;
-    margin-bottom: 80px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-  }
-  
-  .about-middle-banner img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  /* Reviews Section */
-  .about-reviews-section {
-    margin-top: 100px;
-    text-align: center;
-  }
-  
-  .reviews-main-title {
-    font-size: 32px;
-    font-weight: 800;
-    margin-bottom: 40px;
-    letter-spacing: 2px;
-  }
-  
-  .reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 25px;
-    text-align: left;
-  }
-  
-  .review-card {
-    background: #fdfdfd;
-    border: 1px solid #eeeeee;
-    padding: 25px;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-  }
-  
-  .review-user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-  
-  .user-avatar-placeholder {
-    width: 45px;
-    height: 45px;
-    background: #f0f0f0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-  }
-  
-  .review-user-info h4 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-  }
-  
-  .stars {
-    color: #f48020;
-    font-size: 14px;
-    margin-top: 2px;
-  }
-  
-  .review-text {
-    font-size: 14px;
-    color: #666666;
-    line-height: 1.5;
-    margin: 0;
-  }
-  
-  /* Reviews Buttons Row */
-  .reviews-buttons-row {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 40px;
-  }
-  
-  .btn-leave-review {
-    background-color: #f48020;
-    color: white;
-    border: none;
-    padding: 12px 28px;
-    font-size: 15px;
-    font-weight: 600;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-  
-  .btn-leave-review:hover {
-    background-color: #d66f17;
-  }
-  
-  .btn-see-all {
-    background-color: transparent;
-    color: #f48020;
-    border: 2px solid #f48020;
-    padding: 10px 26px;
-    font-size: 15px;
-    font-weight: 600;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  
-  .btn-see-all:hover {
-    background-color: #f48020;
-    color: white;
-  }
-  
-  /* Responsive Design */
+  @apply w-full bg-white text-[#222222];
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* --- HERO SECTION --- */
+.about-hero-section {
+  @apply w-full h-[450px] overflow-hidden relative;
+
   @media (max-width: 768px) {
-    .about-row-section, .about-row-section.reverse {
-      flex-direction: column;
-      gap: 30px;
-    }
-    .reviews-grid {
-      grid-template-columns: 1fr;
-    }
-    .about-hero-section {
-      height: 250px;
-    }
-    .about-image-block, .about-middle-banner {
-      height: 260px;
+    @apply h-[260px];
+  }
+}
+
+.about-hero-img {
+  @apply w-full h-full object-cover;
+}
+
+/* --- CONTENT WRAPPER --- */
+.about-content-wrapper {
+  @apply max-w-[1200px] mx-auto p-[60px_20px];
+
+  @media (max-width: 768px) {
+    @apply p-[40px_16px];
+  }
+}
+
+/* --- ALTERNATING ROW LAYOUT --- */
+.about-row-section {
+  @apply flex items-center gap-[50px] mb-[80px];
+
+  &.reverse {
+    @apply flex-row-reverse;
+  }
+
+  @media (max-width: 768px) {
+    @apply flex-col gap-[30px] mb-[50px];
+    
+    &.reverse {
+      @apply flex-col;
     }
   }
+}
+
+.about-image-block {
+  @apply flex-1 h-[380px] overflow-hidden rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-slate-100;
+
+  @media (max-width: 768px) {
+    @apply w-full h-[260px];
+  }
+}
+
+.about-image-block img {
+  @apply w-full h-full object-cover transition-transform duration-500 ease-in-out;
+
+  &:hover {
+    @apply scale-[1.04];
+  }
+}
+
+.about-text-block {
+  @apply flex-1 flex flex-col justify-center;
+}
+
+.about-section-title {
+  @apply text-[30px] font-extrabold mb-[20px] tracking-tight text-slate-900;
+
+  @media (max-width: 768px) {
+    @apply text-[24px] mb-[12px] text-center;
+  }
+}
+
+.about-text-block p {
+  @apply text-[16px] leading-[1.8] text-slate-600 font-normal;
+
+  @media (max-width: 768px) {
+    @apply text-[15px] text-center;
+  }
+}
+
+/* --- MIDDLE LARGE BANNER --- */
+.about-middle-banner {
+  @apply w-full h-[400px] rounded-[20px] overflow-hidden mb-[80px] shadow-[0_12px_35px_rgba(0,0,0,0.06)] transition-all duration-300 border border-slate-100;
+
+  &:hover {
+    @apply shadow-[0_20px_40px_rgba(0,0,0,0.1)] -translate-y-[2px];
+  }
+
+  @media (max-width: 768px) {
+    @apply h-[24px] min-h-[240px] mb-[50px];
+  }
+}
+
+.about-middle-banner img {
+  @apply w-full h-full object-cover;
+}
+
+/* --- REVIEWS SECTION --- */
+.about-reviews-section {
+  @apply mt-[100px] text-center;
+
+  @media (max-width: 768px) {
+    @apply mt-[60px];
+  }
+}
+
+.reviews-main-title {
+  @apply text-[34px] font-extrabold mb-[45px] tracking-tight text-slate-900;
+
+  @media (max-width: 768px) {
+    @apply text-[26px] mb-[30px];
+  }
+}
+
+.reviews-grid {
+  @apply grid grid-cols-2 gap-[25px] text-left;
+
+  @media (max-width: 768px) {
+    @apply grid-cols-1 gap-[18px];
+  }
+}
+
+.review-card {
+  @apply bg-white border border-slate-100 p-[25px] rounded-[16px] shadow-[0_5px_20px_rgba(0,0,0,0.01)] transition-all duration-300 ease-in-out;
+
+  &:hover {
+    @apply shadow-[0_12px_28px_rgba(0,0,0,0.06)] border-slate-200/80 -translate-y-[4px];
+  }
+}
+
+.review-user-info {
+  @apply flex items-center gap-[15px] mb-[15px];
+}
+
+.user-avatar-placeholder {
+  @apply w-[48px] h-[48px] bg-slate-50 text-slate-500 rounded-full flex items-center justify-center text-[20px] font-bold border border-slate-200/60 shadow-inner;
+}
+
+.review-user-info h4 {
+  @apply m-0 text-[16px] font-bold text-slate-800 tracking-tight;
+}
+
+.stars {
+  @apply text-[#f48020] text-[13px] mt-[3px] tracking-[1px];
+}
+
+.review-text {
+  @apply text-[14px] text-slate-600 leading-[1.6] m-0 font-normal;
+}
+
+/* --- REVIEWS BUTTONS ROW --- */
+.reviews-buttons-row {
+  @apply flex justify-center items-center gap-[15px] mt-[45px];
+
+  @media (max-width: 500px) {
+    @apply flex-col items-stretch gap-[12px] px-4;
+  }
+}
+
+.btn-leave-review {
+  @apply bg-[#f48020] text-white border-none p-[13px_32px] font-semibold text-[15px] rounded-[50px] cursor-pointer shadow-[0_6px_20px_rgba(244,128,32,0.25)] transition-all duration-300 ease-in-out;
+
+  &:hover {
+    @apply bg-[#d66f17] -translate-y-[2px] shadow-[0_8px_25px_rgba(214,111,23,0.35)];
+  }
+}
+
+.btn-see-all {
+  @apply bg-transparent text-[#f48020] border-2 border-[#f48020] p-[11px_30px] font-semibold text-[15px] rounded-[50px] cursor-pointer transition-all duration-300 ease-in-out;
+
+  &:hover {
+    @apply bg-[#f48020] text-white -translate-y-[2px] shadow-[0_6px_20px_rgba(244,128,32,0.2)];
+  }
+}

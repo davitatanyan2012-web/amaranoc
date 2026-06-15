@@ -1,4 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Mardoto:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* 💬 Ներմուծում ենք Չատի ոճերը */
+@import "./components/PremiumChat.css";
+
+/* --- BASE STYLES (Tailwind v4 ոճով) --- */
+@theme {
+  --font-sans: 'Mardoto', sans-serif;
+}
 
 * {
   box-sizing: border-box;
@@ -8,900 +17,614 @@
 }
 
 body {
-  background-color: #ffffff;
-  color: #222222;
+  @apply bg-white text-[#222222];
 }
 
 /* --- DISCOUNTS PAGE --- */
 .discounts-page-container {
-  padding: 30px 4%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
+  @apply p-[30px_4%] w-full flex flex-col gap-[40px];
+
+  @media (max-width: 500px) {
+    @apply p-[20px_16px] gap-[25px];
+  }
 }
 
 .discount-banners-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  @apply grid grid-cols-3 gap-[20px];
+
+  @media (max-width: 500px) {
+    @apply grid-cols-1 gap-[15px];
+  }
 }
 
 .discount-banner-card {
-  background: #0f172a;
-  color: #fff;
-  padding: 25px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  position: relative;
+  @apply bg-[#0f172a] text-white p-[25px] rounded-[16px] flex flex-col gap-[15px] relative;
 }
 
 .badge-percent {
-  font-size: 28px;
-  font-weight: 800;
-  color: #fff;
+  @apply text-[28px] font-extrabold text-white;
 }
 
 .discount-banner-card p {
-  font-size: 13px;
-  color: #cbd5e1;
-  line-height: 1.5;
+  @apply text-[13px] text-[#cbd5e1] leading-relaxed;
 }
 
 /* --- NEW PREMIUM GIFT BANNER --- */
 .premium-gift-banner {
-  width: 100%;
-  min-height: 420px;
+  @apply w-full min-h-[420px] bg-cover bg-center bg-no-repeat rounded-[24px] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.15)] my-[20px];
   background-image: url('https://amaranoc.am/images/raffle/special-discounts-image.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  margin: 20px 0;
+
+  @media (max-width: 500px) {
+    @apply min-h-auto rounded-[16px] my-[10px];
+  }
 }
 
-/* Մթնեցնող շերտ՝ ձախից աջ աստիճանական անցումով */
 .banner-overlay {
-  width: 100%;
-  height: 100%;
-  min-height: 420px;
-  background: linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.4) 100%);
-  padding: 60px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 40px;
+  @apply w-full h-full min-h-[420px] bg-gradient-to-r from-[#0f172a]/85 to-[#0f172a]/40 p-[60px] flex justify-between items-center gap-[40px];
+  
+  @media (max-width: 992px) {
+    @apply flex-col p-[40px];
+  }
+
+  @media (max-width: 500px) {
+    @apply p-[30px_16px] gap-[25px] bg-gradient-to-b from-[#0f172a]/90 to-[#0f172a]/70;
+  }
 }
 
 .gift-content-left {
-  max-width: 60%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  @apply max-w-[60%] flex flex-col gap-[20px];
+
+  @media (max-width: 992px) {
+    @apply max-w-full text-center items-center;
+  }
 }
 
 .gift-content-left h2 {
-  font-size: 34px;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.3;
+  @apply text-[34px] font-extrabold text-white leading-[1.3];
+
+  @media (max-width: 500px) {
+    @apply text-[24px];
+  }
 }
 
 .brand-orange-text {
-  color: #f48020;
+  @apply text-[#f48020];
 }
 
 .gift-content-left p {
-  font-size: 15px;
-  color: #e2e8f0;
-  line-height: 1.6;
-  max-width: 500px;
+  @apply text-[15px] text-[#e2e8f0] leading-relaxed max-w-[500px];
+
+  @media (max-width: 500px) {
+    @apply text-[13px];
+  }
 }
 
-/* Գումարների ընտրության կոճակները */
 .gift-values-grid {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
+  @apply flex gap-[12px] flex-wrap mb-[10px];
+
+  @media (max-width: 992px) {
+    @apply justify-center;
+  }
+  @media (max-width: 500px) {
+    @apply gap-[8px];
+  }
 }
 
 .value-chip-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 22px;
-  border-radius: 50px;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
+  @apply bg-white/[0.08] border border-white/20 p-[10px_22px] rounded-[50px] text-white font-semibold text-[14px] cursor-pointer backdrop-blur-[8px] transition-all duration-250 ease-in-out;
+  
+  &:hover {
+    @apply bg-white text-[#0f172a] border-white -translate-y-[3px] shadow-[0_5px_15px_rgba(255,255,255,0.2)];
+  }
+
+  @media (max-width: 500px) {
+    @apply p-[8px_16px] text-[13px];
+  }
 }
 
-.value-chip-btn:hover {
-  background: #ffffff;
-  color: #0f172a;
-  border-color: #ffffff;
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
-}
-
-/* Գլխավոր Պատվիրել կոճակը */
 .premium-order-btn {
-  width: fit-content;
-  padding: 14px 45px;
-  background: #f48020;
-  color: #ffffff;
-  border: none;
-  font-weight: 700;
-  font-size: 16px;
-  border-radius: 50px;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(244, 128, 32, 0.4);
-  transition: all 0.25s ease;
+  @apply w-fit p-[14px_45px] bg-[#f48020] text-white border-none font-bold text-[16px] rounded-[50px] cursor-pointer shadow-[0_4px_20px_rgba(244,128,32,0.4)] transition-all duration-250 ease-in-out;
+  
+  &:hover {
+    @apply bg-[#e07016] -translate-y-[2px] shadow-[0_6px_25px_rgba(244,128,32,0.5)];
+  }
+
+  @media (max-width: 500px) {
+    @apply w-full text-center p-[12px_30px] text-[15px];
+  }
 }
 
-.premium-order-btn:hover {
-  background: #e07016;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(244, 128, 32, 0.5);
-}
-
-/* --- LUXURY PLASTIC CARD MOCKUP (RIGHT SIDE) --- */
+/* --- LUXURY PLASTIC CARD MOCKUP --- */
 .gift-content-right {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
+  @apply flex justify-center items-center flex-grow;
+  @media (max-width: 500px) {
+    @apply w-full;
+  }
 }
 
 .luxury-plastic-card {
-  width: 320px;
-  height: 190px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 20px;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  transition: transform 0.4s ease;
+  @apply w-[320px] h-[190px] bg-gradient-to-br from-white/15 to-white/5 border border-white/25 rounded-[20px] backdrop-blur-[14px] p-[25px] flex flex-col justify-between relative shadow-[0_15px_35px_rgba(0,0,0,0.3)] transition-transform duration-400 ease-in-out;
+  
+  &:hover {
+    transform: rotateY(10deg) rotateX(5deg) translateY(-5px);
+  }
+
+  @media (max-width: 500px) {
+    @apply w-full max-w-[290px] h-[170px] p-[18px];
+  }
 }
 
-.luxury-plastic-card:hover {
-  transform: rotateY(10deg) rotateX(5deg) translateY(-5px);
-}
-
-/* Ոսկեգույն չիպի էֆեկտ քարտի վրա */
 .card-chip {
-  width: 40px;
-  height: 30px;
-  background: linear-gradient(135deg, #e0a96d 0%, #967046 100%);
-  border-radius: 6px;
-  opacity: 0.8;
+  @apply w-[40px] h-[30px] bg-gradient-to-br from-[#e0a96d] to-[#967046] rounded-[6px] opacity-80;
 }
 
 .card-brand-name {
-  font-size: 24px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 3px;
+  @apply text-[24px] font-extrabold text-white tracking-[3px];
   text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .card-holder {
-  font-size: 11px;
-  color: #cbd5e1;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
-
-/* Ադապտիվ դիզայն */
-@media (max-width: 992px) {
-  .banner-overlay {
-    flex-direction: column;
-    padding: 40px;
-  }
-  .gift-content-left {
-    max-width: 100%;
-    text-align: center;
-    align-items: center;
-  }
-  .gift-values-grid {
-    justify-content: center;
-  }
+  @apply text-[11px] text-[#cbd5e1] tracking-[1.5px] uppercase;
 }
 
 /* Hot Offers Range Slider */
 .hot-offers-section h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
+  @apply text-[22px] mb-[20px];
 }
 
 .horizontal-filter {
-  background: #f8fafc;
-  padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  @apply bg-[#f8fafc] p-[20px] rounded-[16px] mb-[30px] flex flex-col gap-[10px];
 }
 
 .slider-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  @apply flex flex-col gap-[5px];
 }
 
 .slider-wrapper input[type="range"] {
-  width: 100%;
-  accent-color: #d85a1b;
+  @apply w-full accent-[#d85a1b];
 }
 
 .slider-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #64748b;
+  @apply flex justify-between text-[13px] text-[#64748b];
 }
 
 .current-val {
-  font-weight: 700;
-  color: #0f172a;
+  @apply font-bold text-[#0f172a];
 }
 
 /* Header Favorite Badge */
 .favorite-header-btn {
-  position: relative;
+  @apply relative;
 }
 
 .fav-badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: #f48020;
-  color: white;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-.app-container {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
+  @apply absolute -top-[6px] -right-[8px] bg-[#f48020] text-white rounded-full w-[16px] h-[16px] text-[10px] flex items-center justify-center font-bold;
 }
 
 /* --- HEADER OPTIMIZATION --- */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 4%; /* Տոկոսային padding-ը ապահովում է ճկունություն բոլոր էկրանների համար */
-  border-bottom: 1px solid #f2f2f2;
-  background: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  width: 100%;
+  @apply flex justify-between items-center p-[15px_4%] border-b border-[#f2f2f2] bg-white sticky top-0 z-[1000] w-full;
+
+  @media (max-width: 500px) {
+    @apply flex-col gap-[15px] p-[15px_16px] items-stretch;
+  }
 }
 
 .logo img {
-  height: 24px;
-  display: block;
+  @apply h-[24px] block;
+  @media (max-width: 500px) {
+    @apply mx-auto;
+  }
 }
 
 .header-nav ul {
-  display: flex;
-  gap: 35px;
-  list-style: none;
+  @apply flex gap-[35px] list-none;
+
+  @media (max-width: 500px) {
+    @apply gap-[15px] justify-center flex-wrap;
+  }
 }
 
 .header-nav a {
-  text-decoration: none;
-  color: #222;
-  font-weight: 500;
-  font-size: 15px;
-  transition: color 0.2s;
-}
+  @apply no-underline text-[#222] font-medium text-[15px] transition-colors duration-200;
 
-.header-nav a:hover, .header-nav a.active {
-  color: #ff9900;
+  &:hover, &.active {
+    @apply text-[#ff9900];
+  }
 }
 
 .header-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  @apply flex items-center gap-[20px];
+
+  @media (max-width: 500px) {
+    @apply justify-between w-full mt-[5px];
+  }
 }
 
 .icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #555;
+  @apply bg-transparent border-none cursor-pointer flex items-center justify-center text-[#555];
 }
 
 .search-box {
-  display: flex;
-  align-items: center;
-  background: #f7f7f7;
-  border-radius: 30px;
-  padding: 6px 18px;
-  width: 240px;
+  @apply flex items-center bg-[#f7f7f7] rounded-[30px] p-[6px_18px] w-[240px];
+
+  @media (max-width: 500px) {
+    @apply flex-1 w-auto;
+  }
 }
 
 .search-box input {
-  border: none;
-  background: transparent;
-  outline: none;
-  width: 100%;
-  font-size: 14px;
-  color: #333;
+  @apply border-none bg-transparent outline-none w-full text-[14px] text-[#333];
 }
 
 /* --- LAYOUT --- */
 .content-wrapper {
-  display: flex;
-  padding: 30px 4%; /* Կողային padding-ները համապատասխանեցված են Header-ին */
-  gap: 40px;
-  width: 100%;
+  @apply flex p-[30px_4%] gap-[40px] w-full;
+
+  @media (max-width: 500px) {
+    @apply flex-col p-[20px_16px] gap-[30px];
+  }
 }
+
 /* --- SIDEBAR --- */
 .sidebar {
-  width: 280px;
-  flex-shrink: 0;
+  @apply w-[280px] shrink-0;
+
+  @media (max-width: 500px) {
+    @apply w-full;
+  }
 }
 
 .filter-section {
-  padding-bottom: 22px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid #f0f0f0;
+  @apply pb-[22px] mb-[22px] border-b border-[#f0f0f0];
 }
 
 .filter-section h4 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #1a1a1a;
+  @apply text-[15px] font-semibold mb-[15px] text-[#1a1a1a];
 }
 
 .checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #444;
-  cursor: pointer;
+  @apply flex items-center gap-[12px] mb-[12px] text-[14px] text-[#444] cursor-pointer;
 }
 
 .checkbox-group input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #000;
+  @apply w-[18px] h-[18px] accent-black;
 }
 
 .price-inputs {
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
+  @apply flex gap-[12px] mt-[12px];
 }
 
 .price-inputs input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #e2e2e2;
-  border-radius: 10px;
-  outline: none;
-  font-size: 14px;
-  background: #fcfcfc;
+  @apply w-full p-[10px_14px] border border-[#e2e2e2] rounded-[10px] outline-none text-[14px] bg-[#fcfcfc];
 }
 
 .toggle-group {
-  display: flex;
-  background: #f1f1f1;
-  border-radius: 30px;
-  padding: 3px;
+  @apply flex bg-[#f1f1f1] rounded-[30px] p-[3px];
 }
 
 .toggle-btn {
-  flex: 1;
-  padding: 9px;
-  border: none;
-  background: transparent;
-  border-radius: 30px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.toggle-btn.active {
-  background: #111111;
-  color: #ffffff;
+  @apply flex-1 p-[9px] border-none bg-transparent rounded-[30px] cursor-pointer text-[13px] font-medium transition-all duration-200;
+  
+  &.active {
+    @apply bg-[#111111] text-white;
+  }
 }
 
 /* --- MAIN CONTENT & CARDS --- */
 .main-content {
-  flex: 1;
+  @apply flex-1;
 }
 
 .main-content h2 {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 25px;
+  @apply text-[22px] font-bold mb-[25px];
+
+  @media (max-width: 500px) {
+    @apply text-[18px] mb-[15px] text-center;
+  }
 }
 
 .property-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Եթե էկրանը շատ մեծ է, կարող ես դարձնել նաև repeat(4, 1fr) */
-  gap: 24px;
+  @apply grid grid-cols-3 gap-[24px];
+
+  @media (max-width: 500px) {
+    @apply grid-cols-1 gap-[20px];
+  }
 }
 
 .property-card {
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
+  @apply no-underline text-inherit flex flex-col;
 }
 
 .card-image-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 68%; /* Ճիշտ մասշտաբավորում (Aspect Ratio) */
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  background-color: #eaeaea;
+  @apply relative w-full pt-[68%] rounded-[16px] overflow-hidden mb-[12px] bg-[#eaeaea];
 }
 
 .card-image-wrapper img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  @apply absolute top-0 left-0 w-full h-full object-cover;
 }
 
 .favorite-icon {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  @apply absolute top-[15px] right-[15px] bg-white/90 border-none rounded-full w-[34px] h-[34px] cursor-pointer flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)];
 }
 
 .card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  @apply flex flex-col gap-[6px];
 }
 
 .card-top-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  @apply flex justify-between items-center;
 }
 
 .card-meta-details {
-  display: flex;
-  gap: 16px;
-  align-items: center;
+  @apply flex gap-[16px] items-center;
 }
 
 .meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  color: #222;
-  font-weight: 500;
+  @apply flex items-center gap-[5px] text-[14px] text-[#222] font-medium;
 }
 
 .rating {
-  background: #f48020;
-  color: white;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 3px;
+  @apply bg-[#f48020] text-white p-[3px_8px] rounded-[6px] text-[12px] font-bold flex items-center gap-[3px];
 }
 
 .price-tag {
-  font-weight: 700;
-  font-size: 16px;
-  color: #111;
-  margin-top: 2px;
+  @apply font-bold text-[16px] text-[#111] mt-[2px];
 }
+
 /* --- FOOTER STYLES --- */
 .footer-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-top: 50px;
+  @apply w-full flex flex-col mt-[50px];
+  @media (max-width: 500px) {
+    @apply mt-[30px];
+  }
 }
 
-/* Հայտարարության բլոկ */
 .announcement-section {
-  width: 100%;
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
-              url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1440&q=80');
-  background-size: cover;
-  background-position: center;
-  padding: 60px 4%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @apply w-full bg-cover bg-center p-[60px_4%] flex justify-center items-center;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                    url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1440&q=80');
+
+  @media (max-width: 500px) {
+    @apply p-[40px_16px];
+  }
 }
 
-/* Glassmorphism Էֆեկտ */
 .glass-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 40px;
-  width: 100%; /* Կլանidentity է ողջ հասանելի տարածքը */
-  max-width: 100%; /* Հանում ենք նաև այս սահմանափակումը */
-  text-align: center;
-  color: #fff;
+  @apply bg-white/8 backdrop-blur-[12px] border border-white/15 rounded-[20px] p-[40px] w-full max-w-full text-center text-white;
+
+  @media (max-width: 500px) {
+    @apply p-[25px_15px] rounded-[16px];
+  }
 }
 
 .glass-card h3 {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
+  @apply text-[24px] font-bold tracking-[1px] mb-[10px];
+
+  @media (max-width: 500px) {
+    @apply text-[18px];
+  }
 }
 
 .glass-card .subtitle {
-  font-size: 14px;
-  color: #dddddd;
-  margin-bottom: 30px;
+  @apply text-[14px] text-[#dddddd] mb-[30px];
+  @media (max-width: 500px) {
+    @apply text-[12px] mb-[20px];
+  }
 }
 
 .announcement-form {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
+  @apply flex gap-[15px] items-center justify-center flex-wrap;
+
+  @media (max-width: 500px) {
+    @apply flex-col items-stretch w-full gap-[12px];
+  }
 }
 
 .announcement-form input {
-  flex: 1;
-  min-width: 220px;
-  padding: 14px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 30px;
-  outline: none;
-  color: #fff;
-  font-size: 14px;
-}
+  @apply flex-1 min-w-[220px] p-[14px_20px] bg-white/10 border border-white/20 rounded-[30px] outline-none text-white text-[14px];
+  
+  &:focus {
+    @apply bg-white/15 border-white/40;
+  }
+  &::placeholder {
+    @apply text-[#cccccc];
+  }
 
-.announcement-form input::placeholder {
-  color: #cccccc;
-}
-
-.announcement-form input:focus {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
+  @media (max-width: 500px) {
+    @apply w-full min-w-full text-center;
+  }
 }
 
 .submit-btn {
-  padding: 14px 35px;
-  background: #f48020; /* Օրանժ գույնը */
-  color: #fff;
-  border: none;
-  border-radius: 30px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-size: 14px;
+  @apply p-[14px_35px] bg-[#f48020] text-white border-none rounded-[30px] font-semibold cursor-pointer transition-colors duration-200 text-[14px];
+  
+  &:hover {
+    @apply bg-[#e07016];
+  }
+
+  @media (max-width: 500px) {
+    @apply w-full text-center;
+  }
 }
 
-.submit-btn:hover {
-  background: #e07016;
-}
-
-/* Կոնտակտների մուգ բլոկ */
 .contacts-section {
-  background-color: #0b0f19;
-  color: #ffffff;
-  padding: 50px 4% 80px 4%;
-  position: relative;
-  overflow: hidden;
-  text-align: center;
-  width: 100%;
+  @apply bg-[#0b0f19] text-white p-[50px_4%_80px_4%] relative overflow-hidden text-center w-full;
+
+  @media (max-width: 500px) {
+    @apply p-[35px_16px_60px_16px];
+  }
 }
 
 .contacts-section h2 {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 40px;
+  @apply text-[26px] font-bold tracking-[2px] mb-[40px];
+
+  @media (max-width: 500px) {
+    @apply text-[20px] mb-[25px];
+  }
 }
 
 .contacts-grid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-  flex-wrap: wrap;
-  max-width: 1200px;
-  margin: 0 auto 40px auto;
+  @apply flex justify-center items-center gap-[40px] flex-wrap max-w-[1200px] m-[0_auto_40px_auto];
+
+  @media (max-width: 500px) {
+    @apply flex-col items-center gap-[18px] mb-[30px];
+  }
 }
 
 .contact-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #cccccc;
-}
-
-.contact-item svg {
-  color: #ffffff;
+  @apply flex items-center gap-[10px] text-[14px] text-[#cccccc];
+  
+  & svg {
+    @apply text-white;
+  }
 }
 
 .footer-links {
-  margin-bottom: 25px;
+  @apply mb-[25px];
+  @media (max-width: 500px) {
+    @apply flex flex-col gap-[10px] items-center;
+  }
 }
 
 .footer-links a {
-  color: #aaaaaa;
-  text-decoration: none;
-  font-size: 13px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 2px;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: #ffffff;
+  @apply text-[#aaaaaa] no-underline text-[13px] border-b border-[#444] pb-[2px] transition-colors duration-200;
+  
+  &:hover {
+    @apply text-white;
+  }
 }
 
 .copyright {
-  font-size: 12px;
-  color: #666666;
-  letter-spacing: 0.5px;
+  @apply text-[12px] text-[#666666] tracking-[0.5px];
 }
 
-/* Սարերի վեկտորային դիրքավորումը */
 .mountain-vector {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  line-height: 0;
+  @apply absolute bottom-0 left-0 w-full leading-[0];
 }
-/* 🌐 Էջի ընդհանուր էսթետիկան */
+
+/* 🌐 SERVICES PAGE */
 .services-page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 50px 20px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #fafafa;
+  @apply max-w-[1200px] mx-auto p-[50px_20px] bg-[#fafafa];
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  @media (max-width: 500px) {
+    @apply p-[25px_16px];
+  }
 }
 
-/* 🗂 Կատեգորիաների նուրբ մենյու */
 .services-tabs-menu {
-  display: flex;
-  justify-content: flex-start;
-  gap: 8px;
-  margin-bottom: 35px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #edf2f7;
+  @apply flex justify-start gap-[8px] mb-[35px] overflow-x-auto pb-[10px] border-b border-[#edf2f7];
+  @media (max-width: 500px) {
+    @apply mb-[20px];
+  }
 }
 
-/* Կատեգորիայի կոճակները */
 .services-tab-item {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #4a5568;
-  padding: 8px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
+  @apply bg-white border border-[#e2e8f0] text-[#4a5568] p-[8px_18px] rounded-[20px] text-[14px] font-medium cursor-pointer transition-all duration-200 ease-in-out whitespace-nowrap;
+  
+  &:hover {
+    @apply bg-[#f7fafc] border-[#cbd5e0] text-[#1a202c];
+  }
+  &.is-active {
+    @apply bg-[#ff7a00] border-[#ff7a00] text-white font-semibold;
+  }
 }
 
-.services-tab-item:hover {
-  background-color: #f7fafc;
-  border-color: #cbd5e0;
-  color: #1a202c;
-}
-
-/* Ակտիվ կատեգորիա */
-.services-tab-item.is-active {
-  background-color: #ff7a00; /* Ամարանոցի օրիգինալ նարնջագույնը */
-  border-color: #ff7a00;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* ⚡ Իդեալական 2 սյունականի ցանց */
 .services-twin-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  @apply grid grid-cols-2 gap-[20px];
+
+  @media (max-width: 900px) {
+    @apply grid-cols-1;
+  }
 }
 
-/* 💳 Պրեմիում Հորիզոնական Քարտ */
 .service-premium-card {
-  display: flex;
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #f0f0f0;
-  overflow: hidden;
-  height: 180px; /* Կոկիկ ֆիքսված բարձրություն */
-  transition: all 0.3s ease;
+  @apply flex bg-white rounded-[14px] border border-[#f0f0f0] overflow-hidden h-[180px] transition-all duration-300 ease-in-out;
+  
+  &:hover {
+    @apply -translate-y-[3px] shadow-[0_10px_25px_rgba(0,0,0,0.05)] border-[#e2e8f0];
+  }
+
+  @media (max-width: 500px) {
+    @apply flex-col h-auto;
+  }
 }
 
-.service-premium-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  border-color: #e2e8f0;
-}
-
-/* 🖼 Նկարի բլոկ */
 .service-img-wrapper {
-  width: 35%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
+  @apply w-[35%] h-full relative overflow-hidden;
+
+  @media (max-width: 500px) {
+    @apply w-full h-[160px];
+  }
 }
 
 .service-img-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+  @apply w-full h-full object-cover transition-transform duration-500 ease-in-out;
 }
-
 .service-premium-card:hover .service-img-wrapper img {
-  transform: scale(1.04); /* Նուրբ zoom էֆեկտ հովերի ժամանակ */
+  @apply scale-[1.04];
 }
 
-/* 📝 Տեքստային հատված */
 .service-info-wrapper {
-  width: 65%;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  @apply w-[65%] p-[16px_20px] flex flex-col justify-between;
+
+  @media (max-width: 500px) {
+    @apply w-full gap-[12px] p-[15px];
+  }
 }
 
 .service-text-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  @apply flex flex-col gap-[4px];
 }
 
 .service-card-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a202c;
-  letter-spacing: -0.3px;
+  @apply m-0 text-[16px] font-semibold text-[#1a202c] tracking-tight;
 }
 
 .service-card-desc {
-  margin: 0;
-  font-size: 13px;
-  color: #718096;
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* Մաքսիմում 3 տող */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  @apply m-0 text-[13px] text-[#718096] leading-relaxed line-clamp-3;
 }
 
-/* 💳 Ներքևի տող (Գին + Կոճակ) */
 .service-card-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 8px;
+  @apply flex justify-between items-center pt-[8px];
 }
 
 .service-card-price {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a202c;
+  @apply text-[16px] font-bold text-[#1a202c];
 }
 
-/* 🔘 Կոկիկ «Ավելացնել» Կոճակը */
 .service-card-add-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px; /* Հեռավորությունը իկոնայի և տեքստի միջև */
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #4a5568;
-  padding: 6px 14px;
-  border-radius: 18px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  @apply flex items-center gap-[6px] bg-white border border-[#e2e8f0] text-[#4a5568] p-[6px_14px] rounded-[18px] text-[13px] font-medium cursor-pointer transition-all duration-200 ease-in-out;
+  
+  &:hover {
+    @apply border-[#ff7a00] text-[#ff7a00] bg-[#ff7a00]/[0.02];
+  }
 }
 
-/* Իկոնայի նուրբ անիմացիա */
 .btn-icon-plus {
-  color: #718096;
-  transition: transform 0.2s ease, color 0.2s ease;
+  @apply text-[#718096] transition-all duration-200 ease-in-out;
 }
-
-/* Հովեր էֆեկտ կոճակի վրա */
-.service-card-add-btn:hover {
-  border-color: #ff7a00;
-  color: #ff7a00;
-  background-color: rgba(255, 122, 0, 0.02);
-}
-
 .service-card-add-btn:hover .btn-icon-plus {
-  color: #ff7a00;
-  transform: rotate(90deg); /* Պլյուսը նուրբ պտտվում է */
+  @apply text-[#ff7a00] rotate-90;
 }
 
-/* 📱 Ադապտիվություն */
-@media (max-width: 900px) {
-  .services-twin-grid {
-    grid-template-columns: 1fr;
+html, body {
+  @apply overflow-x-hidden m-0 p-0 w-full min-h-screen box-border;
+}
+
+.app-container {
+  @apply min-h-screen bg-slate-50 text-slate-900 p-6 flex flex-col items-center justify-center;
+  
+  @media (max-width: 640px) {
+    @apply p-4 bg-slate-100;
   }
 }
 
-@media (max-width: 480px) {
-  .service-premium-card {
-    flex-direction: column;
-    height: auto;
-  }
-  .service-img-wrapper {
-    width: 100%;
-    height: 150px;
-  }
-  .service-info-wrapper {
-    width: 100%;
-    gap: 12px;
+.main-content {
+  @apply max-w-4xl w-full bg-white rounded-2xl shadow-sm p-8;
+
+  @media (max-width: 480px) {
+    @apply p-4 rounded-xl shadow-none;
   }
 }
