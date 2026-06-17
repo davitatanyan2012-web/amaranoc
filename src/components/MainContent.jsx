@@ -1,15 +1,35 @@
 import React from 'react';
 import PropertyCard from './PropertyCard';
 
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { log } from 'firebase/firestore/pipelines';
+
+// async function getPlaceAndRating() {
+//   const docRef = doc(db, "data", "UR8GaFbe1SoqTkGv58G6");
+//   const docSnap = await getDoc(docRef);
+
+//   if (docSnap.exists()) {
+//     const data = docSnap.data();
+
+//     return {
+//       place: data.place,
+//       rating: data.rating
+//     };
+//   }
+
+//   return null;
+// }
+// let result=await getPlaceAndRating();
 const MainContent = () => {
   // Ուղիղ API հղումներ, որոնք հաստատ կբացվեն localhost-ում
   const mockProperties = [
     { 
       id: 1, 
       img: "https://api.amaranoc.am/compressed_images/compressed_1775558484173--0.3606161648706505image.webp", 
-      location: "Գառնի", 
+      location: "Գառնի",
       capacity: 6, 
-      rating: 5, 
+      rating:5, 
       price: "45,000" 
     },
     { 
