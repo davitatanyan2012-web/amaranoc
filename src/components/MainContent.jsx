@@ -27,7 +27,7 @@ const MainContent = () => {
     { 
       id: 1, 
       img: "https://api.amaranoc.am/compressed_images/compressed_1775558484173--0.3606161648706505image.webp", 
-      location: "Գառնի",
+      location: "Գառնի", 
       capacity: 6, 
       rating:5, 
       price: "45,000" 
