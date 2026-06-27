@@ -194,6 +194,7 @@ const PremiumChat = () => {
     setCallPartner(selectedUser);
 
     await setupWebRTC(type);
+    
 
     const callDoc = doc(collection(db, 'calls'));
     const offerCandidates = collection(callDoc, 'offerCandidates');
