@@ -2,16 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, googleProvider, signInWithPopup, signOut } from '../firebase';
 import { 
   collection, doc, setDoc, onSnapshot, query, where, orderBy, 
-  addDoc, serverTimestamp, updateDoc, getDoc 
+  addDoc, serverTimestamp, updateDoc 
 } from 'firebase/firestore';
+import AgoraRTC from 'agora-rtc-sdk-ng';
 import './PremiumChat.css';
 
-const servers = {
-  iceServers: [
-    { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
-  ],
-  iceCandidatePoolSize: 10,
-};
+const AGORA_APP_ID = "8e5bb96e35dc4f128c057a8bda722836"; 
 
 const PremiumChat = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,32 +17,20 @@ const PremiumChat = () => {
   const [messages, setMessages] = useState([]);
   const [typedMessage, setTypedMessage] = useState('');
 
-  // 📞 Call States
+  // 📞 Զանգի Կարգավիճակներ
   const [callState, setCallState] = useState('idle'); 
   const [currentCallId, setCurrentCallId] = useState(null);
-  const [callType, setCallType] = useState(null);
+  const [callType, setCallType] = useState(null); 
   const [incomingCallData, setIncomingCallData] = useState(null);
-  const [callPartner, setCallPartner] = useState(null);
+  const [callPartner, setCallPartner] = useState(null); 
   
-  // 🔔 Notifications States
-  const [unreadMessages, setUnreadMessages] = useState({});
-  const [missedCallNotifier, setMissedCallNotifier] = useState(null);
-
-  const pc = useRef(new RTCPeerConnection(servers));
-  const localStream = useRef(null);
-  const remoteStream = useRef(null);
-  
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null);
+  // 🎥 Agora Refs
+  const agoraClient = useRef(null);
+  const localAudioTrack = useRef(null);
+  const localVideoTrack = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const callStateRef = useRef(callState);
-  const callPartnerRef = useRef(callPartner);
-  useEffect(() => { callStateRef.current = callState; }, [callState]);
-  useEffect(() => { callPartnerRef.current = callPartner; }, [callPartner]);
-
-  // 1. Auth վիճակ
+  // Auth վիճակի ստուգում
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
@@ -63,7 +47,16 @@ const PremiumChat = () => {
     return () => unsubscribe();
   }, []);
 
-  // 2. Օգտատերերի ցուցակ
+  // Գուգլով մուտք գործելու ֆունկցիա
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+    }
+  };
+
+  // Օգտատերերի ցուցակ
   useEffect(() => {
     if (!user) return;
     return onSnapshot(collection(db, "users"), (snapshot) => {
@@ -73,236 +66,219 @@ const PremiumChat = () => {
     });
   }, [user]);
 
-  // 3. Նամակների սինխրոնիզացիա
+  // Նամակների սինխրոնիզացիա
   useEffect(() => {
     if (!user || !selectedUser) return;
     const chatId = [user.uid, selectedUser.uid].sort().join('_');
     const q = query(collection(db, "messages"), where("chatId", "==", chatId), orderBy("createdAt", "asc"));
-    
     return onSnapshot(q, (snapshot) => {
       const fetchedMessages = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        fetchedMessages.push(data);
-        if (data.receiverId === user.uid && data.seen === false) {
-          updateDoc(doc(db, "messages", docSnap.id), { seen: true });
-        }
-      });
+      snapshot.forEach((doc) => fetchedMessages.push(doc.data()));
       setMessages(fetchedMessages);
     });
   }, [user, selectedUser]);
 
-  // 4. Չկարդացված նամակներ
+  // 1. ՄՈՒՏՔԱՅԻՆ ԶԱՆԳԵՐԻ ԼՍՈՂ (ՇՏԿՎԱԾ. snapshot.empty-ն այլևս չի անջատում զանգը)
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, "messages"), where("receiverId", "==", user.uid), where("seen", "==", false));
-    return onSnapshot(q, (snapshot) => {
-      const counts = {};
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        counts[data.senderId] = (counts[data.senderId] || 0) + 1;
-      });
-      setUnreadMessages(counts);
-    });
-  }, [user]);
-
-  // 5. 📞 ՄՈՒՏՔԱՅԻՆ ԶԱՆԳԵՐԻ ԼՍՈՒՄ (Ուղղված է Bug-ը)
-  useEffect(() => {
-    if (!user) return;
-    // Լսում ենք և pending, և accepted կարգավիճակները, որպեսզի պատասխանելիս միանգամից չփակվի
-    const q = query(
-      collection(db, "calls"), 
-      where("receiverId", "==", user.uid), 
-      where("status", "in", ["pending", "accepted"])
-    );
+    const q = query(collection(db, "calls"), where("receiverId", "==", user.uid), where("status", "==", "pending"));
     
-    return onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        if (callStateRef.current === 'incoming') {
-          if (callPartnerRef.current) {
-            setMissedCallNotifier(`Բաց թողնված զանգ ${callPartnerRef.current.displayName}-ից`);
-          }
-          handleEndCall(false);
-        }
-        return;
-      }
-      
+    const unsubscribeIncoming = onSnapshot(q, (snapshot) => {
+      // Եթե դատարկ է, պարզապես դուրս գալ: Զանգի փակվելը կվերահսկվի հաջորդ useEffect-ով
+      if (snapshot.empty) return; 
+
       snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        // Միայն եթե նոր զանգ է և մենք ազատ ենք, դարձնում ենք incoming
-        if (data.status === 'pending' && callStateRef.current === 'idle') {
+        if (callState === 'idle') {
+          const data = docSnap.data();
           setIncomingCallData({ id: docSnap.id, ...data });
           setCallType(data.type);
           setCallState('incoming');
-          setCallPartner({
-            uid: data.callerId,
-            displayName: data.callerName,
-            photoURL: data.callerPhoto
-          });
+          setCurrentCallId(docSnap.id);
+          
+          const partnerInfo = usersList.find(u => u.uid === data.callerId) || {
+            displayName: data.callerName || "Օգտատեր",
+            photoURL: data.callerPhoto || ""
+          };
+          setCallPartner(partnerInfo);
         }
       });
     });
-  }, [user]);
 
-  // 6. WebRTC սեթափ
-  const setupWebRTC = async (type) => {
-    localStream.current = await navigator.mediaDevices.getUserMedia({
-      video: type === 'video',
-      audio: true
+    return () => unsubscribeIncoming();
+  }, [user, callState, usersList]);
+
+  // 2. ԱԿՏԻՎ ԶԱՆԳԻ ԿԱՐԳԱՎԻՃԱԿԻ ԼՍՈՂ (ՇՏԿՎԱԾ. Ամբողջությամբ կառավարում է միացումն ու ավարտը)
+  useEffect(() => {
+    const activeCallId = currentCallId || incomingCallData?.id;
+    if (!activeCallId) return;
+
+    const unsubscribeCallDoc = onSnapshot(doc(db, 'calls', activeCallId), (snapshot) => {
+      const data = snapshot.data();
+      if (!data) {
+        handleEndCall(false);
+        return;
+      }
+
+      // Զանգահարողի մոտ՝ երբ դիմացինը սեղմում է «Պատասխանել»
+      if (data.status === 'accepted' && callState === 'calling') {
+        setCallState('active');
+      }
+      
+      // Երկու կողմերի մոտ էլ՝ եթե կարգավիճակը դառնում է ended կամ rejected
+      if (data.status === 'ended' || data.status === 'rejected') {
+        handleEndCall(false);
+      }
     });
 
-    remoteStream.current = new MediaStream();
-
-    localStream.current.getTracks().forEach((track) => {
-      pc.current.addTrack(track, localStream.current);
-    });
-
-    pc.current.ontrack = (event) => {
-      event.streams[0].getTracks().forEach((track) => {
-        remoteStream.current.addTrack(track);
-      });
+    return () => {
+      if (unsubscribeCallDoc) unsubscribeCallDoc();
     };
+  }, [currentCallId, incomingCallData, callState]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // 3. AGORA 24/7 ՄԻԱՑՈՒՄ (ՇՏԿՎԱԾ. Հեռացված են կրկնվող Event-ները և Memory Leak-երը)
+  const setupAgora = async (channelName, type) => {
+    if (!agoraClient.current) {
+      agoraClient.current = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    } else {
+      // Կարևոր է. Մաքրում ենք նախորդ զանգերից մնացած հին լսողները
+      agoraClient.current.removeAllListeners(); 
+    }
+
+    // Երբ դիմացինը միացնում է իր տեսախցիկը/միկրոֆոնը
+    agoraClient.current.on("user-published", async (remoteUser, mediaType) => {
+      await agoraClient.current.subscribe(remoteUser, mediaType);
+      
+      if (mediaType === "video") {
+        const interval = setInterval(() => {
+          const remoteContainer = document.getElementById("remote-video-container");
+          if (remoteContainer) {
+            remoteUser.videoTrack.play(remoteContainer);
+            clearInterval(interval);
+          }
+        }, 100);
+      }
+      if (mediaType === "audio") {
+        remoteUser.audioTrack.play();
+      }
+    });
+
+    agoraClient.current.on("user-unpublished", (remoteUser, mediaType) => {
+      if (mediaType === "video" && remoteUser.videoTrack) remoteUser.videoTrack.stop();
+      if (mediaType === "audio" && remoteUser.audioTrack) remoteUser.audioTrack.stop();
+    });
+
+    // Միանում ենք Agora-ին՝ թոքենի փոխարեն փոխանցելով null (Testing Mode-ի համար)
+    await agoraClient.current.join(AGORA_APP_ID, channelName, null, user.uid);
+
+    if (type === 'video') {
+      const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+      localAudioTrack.current = audioTrack;
+      localVideoTrack.current = videoTrack;
+      
+      const interval = setInterval(() => {
+        const localContainer = document.getElementById("local-video-container");
+        if (localContainer) {
+          videoTrack.play(localContainer);
+          clearInterval(interval);
+        }
+      }, 100);
+
+      await agoraClient.current.publish([audioTrack, videoTrack]);
+    } else {
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      localAudioTrack.current = audioTrack;
+      await agoraClient.current.publish([audioTrack]);
+    }
   };
 
-  // Հոսքերը DOM-ին կապող էֆեկտ
-  useEffect(() => {
-    if (callState === 'active') {
-      const timer = setTimeout(() => {
-        if (callType === 'video') {
-          if (remoteVideoRef.current && remoteStream.current) {
-            remoteVideoRef.current.srcObject = remoteStream.current;
-          }
-          if (localVideoRef.current && localStream.current) {
-            localVideoRef.current.srcObject = localStream.current;
-          }
-        } else if (callType === 'audio') {
-          if (remoteAudioRef.current && remoteStream.current) {
-            remoteAudioRef.current.srcObject = remoteStream.current;
-          }
-        }
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [callState, callType]);
-
-  // 7. 🚀 ԶԱՆԳԻ ՍԿԻԶԲ
   const handleInitiateCall = async (type) => {
-    if (callState !== 'idle') return;
+    if (!selectedUser || !user) return;
     
     setCallType(type);
     setCallState('calling');
     setCallPartner(selectedUser);
 
-    await setupWebRTC(type);
-    
+    const channelName = [user.uid, selectedUser.uid].sort().join('_');
 
-    const callDoc = doc(collection(db, 'calls'));
-    const offerCandidates = collection(callDoc, 'offerCandidates');
-    const answerCandidates = collection(callDoc, 'answerCandidates');
+    try {
+      const callDoc = doc(collection(db, 'calls'));
+      setCurrentCallId(callDoc.id);
 
-    setCurrentCallId(callDoc.id);
-
-    pc.current.onicecandidate = (event) => {
-      event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
-    };
-
-    const offerDescription = await pc.current.createOffer();
-    await pc.current.setLocalDescription(offerDescription);
-
-    await setDoc(callDoc, {
-      offer: { type: offerDescription.type, sdp: offerDescription.sdp },
-      status: 'pending',
-      type,
-      callerId: user.uid,
-      callerName: user.displayName,
-      callerPhoto: user.photoURL,
-      receiverId: selectedUser.uid,
-    });
-
-    onSnapshot(callDoc, (snapshot) => {
-      const data = snapshot.data();
-      if (!pc.current.currentRemoteDescription && data?.answer) {
-        const answerDescription = new RTCSessionDescription(data.answer);
-        pc.current.setRemoteDescription(answerDescription);
-        setCallState('active');
-      }
-      if (data?.status === 'ended' || data?.status === 'rejected') handleEndCall(false);
-    });
-
-    onSnapshot(answerCandidates, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          pc.current.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-        }
+      await setDoc(callDoc, {
+        channelName,
+        status: 'pending',
+        type,
+        callerId: user.uid,
+        callerName: user.displayName,
+        callerPhoto: user.photoURL,
+        receiverId: selectedUser.uid,
+        createdAt: serverTimestamp()
       });
-    });
+
+      await setupAgora(channelName, type);
+    } catch (err) {
+      console.error("Call Initiation Error:", err);
+      handleEndCall(true);
+    }
   };
 
-  // 8. ✅ ՊԱՏԱՍԽԱՆԵԼ ԶԱՆԳԻՆ
+  // Զանգի ընդունում
   const handleAcceptCall = async () => {
-    const callId = incomingCallData?.id;
-    if (!callId) return;
+    const callId = incomingCallData?.id || currentCallId;
+    const channelName = incomingCallData?.channelName;
+    if (!callId || !channelName) return;
     
-    setCurrentCallId(callId);
     setCallState('active');
-    await setupWebRTC(incomingCallData.type);
 
-    const callDoc = doc(db, 'calls', callId);
-    const answerCandidates = collection(callDoc, 'answerCandidates');
-    const offerCandidates = collection(callDoc, 'offerCandidates');
-
-    pc.current.onicecandidate = (event) => {
-      event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
-    };
-
-    const callData = (await getDoc(callDoc)).data();
-    await pc.current.setRemoteDescription(new RTCSessionDescription(callData.offer));
-
-    const answerDescription = await pc.current.createAnswer();
-    await pc.current.setLocalDescription(answerDescription);
-
-    await updateDoc(callDoc, {
-      answer: { type: answerDescription.type, sdp: answerDescription.sdp },
-      status: 'accepted'
-    });
-
-    onSnapshot(offerCandidates, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          pc.current.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-        }
-      });
-    });
-
-    onSnapshot(callDoc, (snapshot) => {
-      if (snapshot.data()?.status === 'ended') handleEndCall(false);
-    });
+    try {
+      const callDoc = doc(db, 'calls', callId);
+      await updateDoc(callDoc, { status: 'accepted' });
+      await setupAgora(channelName, incomingCallData.type);
+    } catch (err) {
+      console.error("Accept Call Error:", err);
+      handleEndCall(true);
+    }
   };
 
-  // 9. 🛑 ԶԱՆԳԻ ԱՎԱՐՏ
+  // 4. ԶԱՆԳԻ ԱՎԱՐՏ (ՇՏԿՎԱԾ. Հուսալիորեն անջատում է բոլոր տրեկերը)
   const handleEndCall = async (notifyFirebase = true) => {
     const activeCallId = currentCallId || incomingCallData?.id;
-
+    
     if (notifyFirebase && activeCallId) {
       try {
         await updateDoc(doc(db, 'calls', activeCallId), { 
-          status: callStateRef.current === 'incoming' ? 'rejected' : 'ended' 
+          status: callState === 'incoming' ? 'rejected' : 'ended' 
         });
       } catch (error) {
-        console.error("Error updating call status:", error);
+        console.error("Firebase Update Call End Error:", error);
       }
     }
 
-    if (localStream.current) {
-      localStream.current.getTracks().forEach(track => track.stop());
-      localStream.current = null;
+    // Կանգնեցնում և փակում ենք մեդիա տրեկերը
+    if (localAudioTrack.current) { 
+      localAudioTrack.current.stop(); 
+      localAudioTrack.current.close(); 
+      localAudioTrack.current = null; 
+    }
+    if (localVideoTrack.current) { 
+      localVideoTrack.current.stop(); 
+      localVideoTrack.current.close(); 
+      localVideoTrack.current = null; 
     }
     
-    if (pc.current) {
-      pc.current.close();
+    if (agoraClient.current) {
+      try {
+        await agoraClient.current.leave();
+      } catch (e) {
+        console.error("Agora Leave Error:", e);
+      }
     }
-    pc.current = new RTCPeerConnection(servers);
 
+    // Վերադարձնում ենք սկզբնական վիճակին
     setCallState('idle');
     setCurrentCallId(null);
     setIncomingCallData(null);
@@ -316,30 +292,18 @@ const PremiumChat = () => {
     const chatId = [user.uid, selectedUser.uid].sort().join('_');
     await addDoc(collection(db, "messages"), {
       chatId, senderId: user.uid, receiverId: selectedUser.uid,
-      text: typedMessage.trim(), createdAt: serverTimestamp(),
-      seen: false 
+      text: typedMessage.trim(), createdAt: serverTimestamp()
     });
     setTypedMessage('');
   };
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   return (
     <>
       <button className="premium-chat-trigger" onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-            <path fillRule="evenodd" d="M4.848 2.771A49.144 49.144 0 0 1 12 2.25c2.43 0 4.817.178 7.152.521 1.582.233 2.722 1.634 2.722 3.23v5.455c0 1.596-1.14 2.997-2.722 3.23a49.074 49.074 0 0 1-3.185.367c-.161.012-.31.09-.398.225l-2.88 4.32a.75.75 0 0 1-1.249 0l-2.88-4.32a.446.446 0 0 0-.398-.225 49.144 49.144 0 0 1-3.185-.367C3.23 14.683 2.09 13.282 2.09 11.686V6.23c0-1.596 1.14-2.997 2.722-3.23Z" clipRule="evenodd" />
-          </svg>
-        )}
-        {Object.values(unreadMessages).reduce((a, b) => a + b, 0) > 0 && (
-          <span className="global-unread-badge">!</span>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
         )}
       </button>
 
@@ -348,32 +312,32 @@ const PremiumChat = () => {
         {/* --- ԶԱՆԳԻ ԷԿՐԱՆՆԵՐ --- */}
         {(callState === 'calling' || callState === 'incoming' || callState === 'active') && (
           <div className="call-overlay-screen">
-            {callState === 'active' ? (
+            
+            {callType === 'video' && (
               <div className="video-streams-container">
-                {callType === 'video' ? (
-                  <>
-                    <video ref={remoteVideoRef} autoPlay playsInline className="remote-video-feed"></video>
-                    <video ref={localVideoRef} autoPlay playsInline muted className="local-video-feed"></video>
-                  </>
-                ) : (
-                  <>
-                    <div className="audio-only-placeholder">
-                      {callPartner?.photoURL ? (
-                        <img src={callPartner.photoURL} alt="" className="audio-avatar" />
-                      ) : (
-                        <div className="audio-avatar fallback">
-                          {callPartner?.displayName?.charAt(0).toUpperCase() || '?'}
-                        </div>
-                      )}
-                      <h4>{callPartner?.displayName}</h4>
-                      <p className="call-status-text">Ակտիվ խոսակցություն...</p>
-                    </div>
-                    <audio ref={remoteAudioRef} autoPlay></audio>
-                  </>
-                )}
+                <div id="remote-video-container" className="remote-video-feed"></div>
+                <div id="local-video-container" className="local-video-feed"></div>
               </div>
-            ) : (
-              <div className="call-info-box">
+            )}
+
+            {callType === 'audio' && (
+              <div className="audio-only-placeholder">
+                {callPartner?.photoURL ? (
+                  <img src={callPartner.photoURL} alt="" className="audio-avatar" />
+                ) : (
+                  <div className="audio-avatar fallback">
+                    {callPartner?.displayName?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                )}
+                <h4>{callPartner?.displayName}</h4>
+                <p className="call-status-text">
+                  {callState === 'active' ? 'Ակտիվ խոսակցություն...' : callState === 'incoming' ? 'Մուտքային աուդիո զանգ' : 'Զանգ է գնում...'}
+                </p>
+              </div>
+            )}
+
+            {callType === 'video' && callState !== 'active' && (
+              <div className="call-info-box z-30">
                 <div className="call-user-pulse ring">
                   {callPartner?.photoURL ? (
                     <img src={callPartner.photoURL} alt="" />
@@ -383,7 +347,7 @@ const PremiumChat = () => {
                     </div>
                   )}
                 </div>
-                <h4>{callState === 'incoming' ? 'Մուտքային զանգ' : 'Զանգ է գնում...'}</h4>
+                <h4>{callState === 'incoming' ? 'Մուտքային վիդեո զանգ' : 'Վիդեո զանգ...'}</h4>
                 <p>{callPartner?.displayName}</p>
               </div>
             )}
@@ -391,16 +355,12 @@ const PremiumChat = () => {
             <div className="call-action-row">
               {callState === 'incoming' && (
                 <button className="btn-call-action accept" onClick={handleAcceptCall}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-1">
-                    <path fillRule="evenodd" d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z" clipRule="evenodd" />
-                  </svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 15.5c-1.2 0-2.4-.2-3.6-.6-.3-.1-.7 0-1 .2l-2.2 2.2c-2.8-1.4-5.1-3.8-6.6-6.6l2.2-2.2c.3-.3.4-.7.2-1-.3-1.1-.5-2.3-.5-3.5 0-.6-.4-1-1-1H4c-.6 0-1 .4-1 1 0 9.4 7.6 17 17 17 .6 0 1-.4 1-1v-3.5c0-.6-.4-1-1-1z"/></svg>
                   Պատասխանել
                 </button>
               )}
               <button className="btn-call-action hangup" onClick={() => handleEndCall(true)}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-1 transform rotate-[135deg]">
-                  <path fillRule="evenodd" d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z" clipRule="evenodd" />
-                </svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.1c-.18-.18-.29-.43-.29-.71 0-.28.11-.53.29-.71C3.33 8.37 7.42 6 12 6s8.67 2.37 11.71 5.68c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
                 Ավարտել
               </button>
             </div>
@@ -410,61 +370,58 @@ const PremiumChat = () => {
         {/* --- ՉԱՏԻ ԳԼԽԱՎՈՐ ՄԱՍԸ --- */}
         <div className="chat-panel-header">
           {selectedUser && callState === 'idle' && (
-            <button className="chat-back-btn" onClick={() => setSelectedUser(null)}>←</button>
+            <button className="chat-back-btn" onClick={() => setSelectedUser(null)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
           )}
           <h3>{selectedUser ? selectedUser.displayName : 'Հաղորդագրություններ'}</h3>
           {selectedUser && callState === 'idle' && (
             <div className="header-call-buttons">
               <button className="header-icon-btn" onClick={() => handleInitiateCall('audio')}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <path fillRule="evenodd" d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z" clipRule="evenodd" />
-                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
               </button>
               <button className="header-icon-btn" onClick={() => handleInitiateCall('video')}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <path d="M16 12.392V8.5A1.5 1.5 0 0 0 14.5 7h-10A1.5 1.5 0 0 0 3 8.5v7A1.5 1.5 0 0 0 4.5 17h10a1.5 1.5 0 0 0 1.5-1.5v-3.892l5.213 3.65A1 1 0 0 0 22 14.433V9.567a1 1 0 0 0-1.787-.825L16 12.392Z" />
-                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7a2 2 0 0 0-2-2h-9a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"></path><path d="M1 9.5L5 12l-4 2.5v-5z"></path></svg>
               </button>
             </div>
           )}
           <button className="chat-panel-close-x" onClick={() => setIsOpen(false)}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
 
-        {/* 🔔 ԾԱՆՈՒՑՈՒՄ */}
-        {missedCallNotifier && (
-          <div className="missed-call-alert-banner">
-            <span className="flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-rose-500">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-              </svg>
-              {missedCallNotifier}
-            </span>
-            <button onClick={() => setMissedCallNotifier(null)}>✕</button>
-          </div>
-        )}
-
         {!user ? (
           <div className="chat-login-overlay">
-            <button className="google-login-btn" onClick={() => signInWithPopup(auth, googleProvider)}>Մուտք գործել Google-ով</button>
+            <p className="login-hint-text">Մուտք գործեք համակարգ՝ անվճար զանգերից և չատից օգտվելու համար</p>
+            <button className="google-login-btn" onClick={handleGoogleLogin}>
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.14 2.1-.97 3.22v2.67h1.57c3.84-3.54 6.05-8.76 6.05-14.28z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.86-3c-1.08.72-2.45 1.16-4.1 1.16-3.16 0-5.83-2.14-6.79-5.02H1.24v3.11C3.21 21.3 7.31 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.21 14.23c-.25-.72-.39-1.5-.39-2.23s.14-1.51.39-2.23V6.66H1.24C.45 8.24 0 10.01 0 12s.45 3.76 1.24 5.34l3.97-3.11z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.96 1.19 15.24 0 12 0 7.31 0 3.21 2.7 1.24 6.66l3.97 3.11c.96-2.88 3.63-5.02 6.79-5.02z"/>
+              </svg>
+              Մուտք գործել Google-ով
+            </button>
           </div>
         ) : (
           <>
             {!selectedUser ? (
               <div className="chat-users-section">
+                <p className="online-users-title">Առցանց օգտատերեր</p>
                 {usersList.map((u) => (
                   <div key={u.uid} className="chat-user-item" onClick={() => setSelectedUser(u)}>
-                    <img src={u.photoURL} alt="" className="user-avatar" />
-                    <span className="user-name-text">{u.displayName}</span>
-                    {unreadMessages[u.uid] > 0 && (
-                      <span className="unread-badge-count">{unreadMessages[u.uid]}</span>
+                    {u.photoURL ? (
+                      <img src={u.photoURL} alt="" className="user-avatar" />
+                    ) : (
+                      <div className="user-avatar fallback">
+                        {u.displayName?.charAt(0).toUpperCase() || '?'}
+                      </div>
                     )}
+                    <span className="user-name-text">{u.displayName}</span>
+                    <span className="user-status-dot"></span>
                   </div>
                 ))}
-                <button className="chat-logout-btn" onClick={() => signOut(auth)}>Դուրս գալ</button>
+                <button className="chat-logout-btn" onClick={() => signOut(auth)}>Դուրս գալ հաշվից</button>
               </div>
             ) : (
               <div className="active-chat-box">
@@ -475,11 +432,9 @@ const PremiumChat = () => {
                   <div ref={messagesEndRef} />
                 </div>
                 <form className="chat-input-form" onSubmit={handleSendMessage}>
-                  <input type="text" className="chat-message-input" placeholder="Նամակ..." value={typedMessage} onChange={(e) => setTypedMessage(e.target.value)} />
+                  <input type="text" className="chat-message-input" placeholder="Գրեք հաղորդագրություն..." value={typedMessage} onChange={(e) => setTypedMessage(e.target.value)} />
                   <button type="submit" className="chat-send-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                   </button>
                 </form>
               </div>
