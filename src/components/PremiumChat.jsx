@@ -1,13 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, googleProvider, signInWithPopup, signOut } from '../firebase';
-import { 
-  collection, doc, setDoc, onSnapshot, query, where, orderBy, 
-  addDoc, serverTimestamp, updateDoc 
+import {
+  collection, doc, setDoc, onSnapshot, query, where, orderBy,
+  addDoc, serverTimestamp, updateDoc
 } from 'firebase/firestore';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import './PremiumChat.css';
 
-const AGORA_APP_ID = "8e5bb96e35dc4f128c057a8bda722836"; 
+// ⚠️ ՈՒՇԱԴՐՈՒԹՅՈՒՆ. App ID-ն և Token-ը ՊԵՏՔ Է լինեն ՀԵՆՑ ՆՈՒՅՆ
+// project-ից Agora Console-ում։
+//
+// AGORA_APP_ID-ն ՉԻ ՓՈԽՎՈՒՄ — սա քո Project-ի մշտական ID-ն է։
+const AGORA_APP_ID = "c227a9221f8c49d898e172403865e494";
+
+// AGORA_TOKEN-ը ՊԵՏՔ Է թարմացվի ամեն օր (wildcard token, 24 ժամ վավերական)։
+// Թարմացման համար.
+//   1) cd agora-token-gen
+//   2) node generate-token.js
+//   3) Copy արա արդյունքում տպված token-ը և տեղադրիր ՍՐԱ փոխարեն
+//   4) npm run build && firebase deploy --only hosting (project root-ից)
+const AGORA_TOKEN = "007eJxTYJC7l7d97upnnttDbO+myVZ8XbnT/ZxulcyJiU+9tYwmma9UYEg2MjJPtDQyMkyzSDaxTLGwtEg1NDcyMTC2MDNNNbE08atwymoIZGRYFzSZhZEBAkF8FobkjMQSBgYAWkgeuw==";
 
 const PremiumChat = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,20 +29,23 @@ const PremiumChat = () => {
   const [messages, setMessages] = useState([]);
   const [typedMessage, setTypedMessage] = useState('');
 
-  // 📞 Զանգի Կարգավիճակներ
-  const [callState, setCallState] = useState('idle'); 
+  const [callState, setCallState] = useState('idle');
   const [currentCallId, setCurrentCallId] = useState(null);
-  const [callType, setCallType] = useState(null); 
+  const [callType, setCallType] = useState(null);
   const [incomingCallData, setIncomingCallData] = useState(null);
-  const [callPartner, setCallPartner] = useState(null); 
-  
-  // 🎥 Agora Refs
+  const [callPartner, setCallPartner] = useState(null);
+  const [callError, setCallError] = useState(null);
+
   const agoraClient = useRef(null);
   const localAudioTrack = useRef(null);
   const localVideoTrack = useRef(null);
+  const [remoteVideoTrack, setRemoteVideoTrack] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Auth վիճակի ստուգում
+  // Պաշտպանվում ենք "race condition"-ից. եթե handleEndCall կանչվում է
+  // մինչդեռ setupAgora-ն դեռ ընթացքի մեջ է, պետք է իմանանք դա չեղարկելու համար։
+  const callSessionId = useRef(0);
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
@@ -47,7 +62,6 @@ const PremiumChat = () => {
     return () => unsubscribe();
   }, []);
 
-  // Գուգլով մուտք գործելու ֆունկցիա
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
@@ -56,7 +70,6 @@ const PremiumChat = () => {
     }
   };
 
-  // Օգտատերերի ցուցակ
   useEffect(() => {
     if (!user) return;
     return onSnapshot(collection(db, "users"), (snapshot) => {
@@ -66,7 +79,6 @@ const PremiumChat = () => {
     });
   }, [user]);
 
-  // Նամակների սինխրոնիզացիա
   useEffect(() => {
     if (!user || !selectedUser) return;
     const chatId = [user.uid, selectedUser.uid].sort().join('_');
@@ -78,14 +90,13 @@ const PremiumChat = () => {
     });
   }, [user, selectedUser]);
 
-  // 1. ՄՈՒՏՔԱՅԻՆ ԶԱՆԳԵՐԻ ԼՍՈՂ (ՇՏԿՎԱԾ. snapshot.empty-ն այլևս չի անջատում զանգը)
+  // 1. ՄՈՒՏՔԱՅԻՆ ԶԱՆԳԵՐԻ ԼՍՈՂ
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "calls"), where("receiverId", "==", user.uid), where("status", "==", "pending"));
-    
+
     const unsubscribeIncoming = onSnapshot(q, (snapshot) => {
-      // Եթե դատարկ է, պարզապես դուրս գալ: Զանգի փակվելը կվերահսկվի հաջորդ useEffect-ով
-      if (snapshot.empty) return; 
+      if (snapshot.empty) return;
 
       snapshot.forEach((docSnap) => {
         if (callState === 'idle') {
@@ -94,7 +105,7 @@ const PremiumChat = () => {
           setCallType(data.type);
           setCallState('incoming');
           setCurrentCallId(docSnap.id);
-          
+
           const partnerInfo = usersList.find(u => u.uid === data.callerId) || {
             displayName: data.callerName || "Օգտատեր",
             photoURL: data.callerPhoto || ""
@@ -107,59 +118,54 @@ const PremiumChat = () => {
     return () => unsubscribeIncoming();
   }, [user, callState, usersList]);
 
-  // 2. ԱԿՏԻՎ ԶԱՆԳԻ ԿԱՐԳԱՎԻՃԱԿԻ ԼՍՈՂ (ՇՏԿՎԱԾ. Ամբողջությամբ կառավարում է միացումն ու ավարտը)
+  // 2. ԱԿՏԻՎ ԶԱՆԳԻ ԿԱՐԳԱՎԻՃԱԿԻ ԼՍՈՂ
   useEffect(() => {
     const activeCallId = currentCallId || incomingCallData?.id;
     if (!activeCallId) return;
 
     const unsubscribeCallDoc = onSnapshot(doc(db, 'calls', activeCallId), (snapshot) => {
-      const data = snapshot.data();
-      if (!data) {
+      if (!snapshot.exists()) {
         handleEndCall(false);
         return;
       }
+      const data = snapshot.data();
 
-      // Զանգահարողի մոտ՝ երբ դիմացինը սեղմում է «Պատասխանել»
       if (data.status === 'accepted' && callState === 'calling') {
-        setCallState('active');
+        setCallState('connecting');
       }
-      
-      // Երկու կողմերի մոտ էլ՝ եթե կարգավիճակը դառնում է ended կամ rejected
+
       if (data.status === 'ended' || data.status === 'rejected') {
         handleEndCall(false);
       }
     });
 
-    return () => {
-      if (unsubscribeCallDoc) unsubscribeCallDoc();
-    };
-  }, [currentCallId, incomingCallData, callState]);
+    return () => unsubscribeCallDoc();
+  }, [currentCallId, incomingCallData?.id, callState]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 3. AGORA 24/7 ՄԻԱՑՈՒՄ (ՇՏԿՎԱԾ. Հեռացված են կրկնվող Event-ները և Memory Leak-երը)
+  // 3. AGORA ՄԻԱՑՈՒՄ
   const setupAgora = async (channelName, type) => {
+    const mySessionId = ++callSessionId.current;
+
     if (!agoraClient.current) {
       agoraClient.current = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-    } else {
-      // Կարևոր է. Մաքրում ենք նախորդ զանգերից մնացած հին լսողները
-      agoraClient.current.removeAllListeners(); 
     }
+    agoraClient.current.removeAllListeners();
 
-    // Երբ դիմացինը միացնում է իր տեսախցիկը/միկրոֆոնը
     agoraClient.current.on("user-published", async (remoteUser, mediaType) => {
       await agoraClient.current.subscribe(remoteUser, mediaType);
-      
+
       if (mediaType === "video") {
-        const interval = setInterval(() => {
+        setRemoteVideoTrack(remoteUser.videoTrack);
+        setTimeout(() => {
           const remoteContainer = document.getElementById("remote-video-container");
           if (remoteContainer) {
             remoteUser.videoTrack.play(remoteContainer);
-            clearInterval(interval);
           }
-        }, 100);
+        }, 300);
       }
       if (mediaType === "audio") {
         remoteUser.audioTrack.play();
@@ -167,37 +173,85 @@ const PremiumChat = () => {
     });
 
     agoraClient.current.on("user-unpublished", (remoteUser, mediaType) => {
-      if (mediaType === "video" && remoteUser.videoTrack) remoteUser.videoTrack.stop();
+      if (mediaType === "video") {
+        if (remoteUser.videoTrack) remoteUser.videoTrack.stop();
+        setRemoteVideoTrack(null);
+      }
       if (mediaType === "audio" && remoteUser.audioTrack) remoteUser.audioTrack.stop();
     });
 
-    // Միանում ենք Agora-ին՝ թոքենի փոխարեն փոխանցելով null (Testing Mode-ի համար)
-    await agoraClient.current.join(AGORA_APP_ID, channelName, null, user.uid);
+    agoraClient.current.on("connection-state-change", (curState, prevState, reason) => {
+      console.log(`Agora connection: ${prevState} -> ${curState} (${reason})`);
+      if (curState === "DISCONNECTED" && reason !== "LEAVE") {
+        setCallError("Կապի խնդիր։ Փորձիր նորից։");
+      }
+    });
+
+    // Wildcard token-ով (AGORA_TOKEN) կարող ենք միանալ ՑԱՆԿԱՑԱԾ channel-ի,
+    // user.uid-ով (Firebase uid-ով), առանց server-ից token պահանջելու։
+    await agoraClient.current.join(AGORA_APP_ID, channelName, AGORA_TOKEN, user.uid);
+
+    if (mySessionId !== callSessionId.current) {
+      await agoraClient.current.leave();
+      return;
+    }
 
     if (type === 'video') {
       const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+
+      if (mySessionId !== callSessionId.current) {
+        audioTrack.close();
+        videoTrack.close();
+        await agoraClient.current.leave();
+        return;
+      }
+
       localAudioTrack.current = audioTrack;
       localVideoTrack.current = videoTrack;
-      
-      const interval = setInterval(() => {
+
+      setTimeout(() => {
         const localContainer = document.getElementById("local-video-container");
         if (localContainer) {
           videoTrack.play(localContainer);
-          clearInterval(interval);
         }
-      }, 100);
+      }, 300);
 
       await agoraClient.current.publish([audioTrack, videoTrack]);
     } else {
       const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+
+      if (mySessionId !== callSessionId.current) {
+        audioTrack.close();
+        await agoraClient.current.leave();
+        return;
+      }
+
       localAudioTrack.current = audioTrack;
       await agoraClient.current.publish([audioTrack]);
     }
+
+    setCallState('active');
   };
+
+  useEffect(() => {
+    if (callState === 'active' || callState === 'calling' || callState === 'connecting') {
+      setTimeout(() => {
+        const localContainer = document.getElementById("local-video-container");
+        if (localContainer && localVideoTrack.current) {
+          localVideoTrack.current.play(localContainer);
+        }
+        const remoteContainer = document.getElementById("remote-video-container");
+        if (remoteContainer && remoteVideoTrack) {
+          remoteVideoTrack.play(remoteContainer);
+        }
+      }, 400);
+    }
+  }, [callState, remoteVideoTrack]);
 
   const handleInitiateCall = async (type) => {
     if (!selectedUser || !user) return;
-    
+
+    setCallError(null);
     setCallType(type);
     setCallState('calling');
     setCallPartner(selectedUser);
@@ -222,54 +276,56 @@ const PremiumChat = () => {
       await setupAgora(channelName, type);
     } catch (err) {
       console.error("Call Initiation Error:", err);
+      setCallError("Կանչը չհաջողվեց սկսել։");
       handleEndCall(true);
     }
   };
 
-  // Զանգի ընդունում
   const handleAcceptCall = async () => {
     const callId = incomingCallData?.id || currentCallId;
     const channelName = incomingCallData?.channelName;
     if (!callId || !channelName) return;
-    
-    setCallState('active');
+
+    setCallError(null);
+    setCallState('connecting');
 
     try {
-      const callDoc = doc(db, 'calls', callId);
-      await updateDoc(callDoc, { status: 'accepted' });
+      const callDocRef = doc(db, 'calls', callId);
+      await updateDoc(callDocRef, { status: 'accepted' });
       await setupAgora(channelName, incomingCallData.type);
     } catch (err) {
       console.error("Accept Call Error:", err);
+      setCallError("Կանչին միանալը չհաջողվեց։");
       handleEndCall(true);
     }
   };
 
-  // 4. ԶԱՆԳԻ ԱՎԱՐՏ (ՇՏԿՎԱԾ. Հուսալիորեն անջատում է բոլոր տրեկերը)
   const handleEndCall = async (notifyFirebase = true) => {
+    callSessionId.current++;
+
     const activeCallId = currentCallId || incomingCallData?.id;
-    
+
     if (notifyFirebase && activeCallId) {
       try {
-        await updateDoc(doc(db, 'calls', activeCallId), { 
-          status: callState === 'incoming' ? 'rejected' : 'ended' 
+        await updateDoc(doc(db, 'calls', activeCallId), {
+          status: callState === 'incoming' ? 'rejected' : 'ended'
         });
       } catch (error) {
         console.error("Firebase Update Call End Error:", error);
       }
     }
 
-    // Կանգնեցնում և փակում ենք մեդիա տրեկերը
-    if (localAudioTrack.current) { 
-      localAudioTrack.current.stop(); 
-      localAudioTrack.current.close(); 
-      localAudioTrack.current = null; 
+    if (localAudioTrack.current) {
+      localAudioTrack.current.stop();
+      localAudioTrack.current.close();
+      localAudioTrack.current = null;
     }
-    if (localVideoTrack.current) { 
-      localVideoTrack.current.stop(); 
-      localVideoTrack.current.close(); 
-      localVideoTrack.current = null; 
+    if (localVideoTrack.current) {
+      localVideoTrack.current.stop();
+      localVideoTrack.current.close();
+      localVideoTrack.current = null;
     }
-    
+
     if (agoraClient.current) {
       try {
         await agoraClient.current.leave();
@@ -278,12 +334,13 @@ const PremiumChat = () => {
       }
     }
 
-    // Վերադարձնում ենք սկզբնական վիճակին
+    setRemoteVideoTrack(null);
     setCallState('idle');
     setCurrentCallId(null);
     setIncomingCallData(null);
     setCallType(null);
     setCallPartner(null);
+    setCallError(null);
   };
 
   const handleSendMessage = async (e) => {
@@ -308,11 +365,10 @@ const PremiumChat = () => {
       </button>
 
       <div className={`premium-chat-panel ${isOpen ? 'is-open' : ''}`}>
-        
-        {/* --- ԶԱՆԳԻ ԷԿՐԱՆՆԵՐ --- */}
-        {(callState === 'calling' || callState === 'incoming' || callState === 'active') && (
+
+        {(callState === 'calling' || callState === 'incoming' || callState === 'active' || callState === 'connecting') && (
           <div className="call-overlay-screen">
-            
+
             {callType === 'video' && (
               <div className="video-streams-container">
                 <div id="remote-video-container" className="remote-video-feed"></div>
@@ -331,7 +387,9 @@ const PremiumChat = () => {
                 )}
                 <h4>{callPartner?.displayName}</h4>
                 <p className="call-status-text">
-                  {callState === 'active' ? 'Ակտիվ խոսակցություն...' : callState === 'incoming' ? 'Մուտքային աուդիո զանգ' : 'Զանգ է գնում...'}
+                  {callState === 'active' ? 'Ակտիվ խոսակցություն...' :
+                   callState === 'connecting' ? 'Միանում ենք...' :
+                   callState === 'incoming' ? 'Մուտքային աուդիո զանգ' : 'Զանգ է գնում...'}
                 </p>
               </div>
             )}
@@ -347,10 +405,15 @@ const PremiumChat = () => {
                     </div>
                   )}
                 </div>
-                <h4>{callState === 'incoming' ? 'Մուտքային վիդեո զանգ' : 'Վիդեո զանգ...'}</h4>
+                <h4>
+                  {callState === 'incoming' ? 'Մուտքային վիդեո զանգ' :
+                   callState === 'connecting' ? 'Միանում ենք...' : 'Վիդեո զանգ...'}
+                </h4>
                 <p>{callPartner?.displayName}</p>
               </div>
             )}
+
+            {callError && <p className="call-error-text">{callError}</p>}
 
             <div className="call-action-row">
               {callState === 'incoming' && (
@@ -367,7 +430,6 @@ const PremiumChat = () => {
           </div>
         )}
 
-        {/* --- ՉԱՏԻ ԳԼԽԱՎՈՐ ՄԱՍԸ --- */}
         <div className="chat-panel-header">
           {selectedUser && callState === 'idle' && (
             <button className="chat-back-btn" onClick={() => setSelectedUser(null)}>
@@ -394,12 +456,6 @@ const PremiumChat = () => {
           <div className="chat-login-overlay">
             <p className="login-hint-text">Մուտք գործեք համակարգ՝ անվճար զանգերից և չատից օգտվելու համար</p>
             <button className="google-login-btn" onClick={handleGoogleLogin}>
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.14 2.1-.97 3.22v2.67h1.57c3.84-3.54 6.05-8.76 6.05-14.28z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.86-3c-1.08.72-2.45 1.16-4.1 1.16-3.16 0-5.83-2.14-6.79-5.02H1.24v3.11C3.21 21.3 7.31 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.21 14.23c-.25-.72-.39-1.5-.39-2.23s.14-1.51.39-2.23V6.66H1.24C.45 8.24 0 10.01 0 12s.45 3.76 1.24 5.34l3.97-3.11z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.96 1.19 15.24 0 12 0 7.31 0 3.21 2.7 1.24 6.66l3.97 3.11c.96-2.88 3.63-5.02 6.79-5.02z"/>
-              </svg>
               Մուտք գործել Google-ով
             </button>
           </div>
